@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import SosButton from "./SosButton.jsx";
-import { fetchRiskScore, sendLocationPing } from "../api/client.js";
+import { fetchRiskScore, sendLocationPing, getShareLink } from "../api/client.js";
 
 const LEVEL_STYLES = {
   critical: { text: "text-critical", bg: "bg-critical/10", label: "Critical" },
@@ -11,7 +11,12 @@ const LEVEL_STYLES = {
 
 export default function HomeScreen({ tourist, onLogout }) {
   const [risk, setRisk] = useState(null);
+  const [shareUrl, setShareUrl] = useState(null);
 
+  async function handleGetShareLink() {
+    const { shareToken } = await getShareLink();
+    setShareUrl(`${window.location.origin}/shared/${shareToken}`);
+  }
   // Send a location ping shortly after the screen loads, then every
   // 60 seconds after that — this is what actually powers geofence
   // breach detection on the backend for this tourist while the app
@@ -70,7 +75,21 @@ export default function HomeScreen({ tourist, onLogout }) {
       <div className="flex flex-1 items-center justify-center py-6">
         <SosButton />
       </div>
-
+       <div className="card p-4">
+        <p className="text-sm font-medium text-ink">Share your trip</p>
+        <p className="mt-1 text-xs text-muted">
+          Let family check your status without needing an account.
+        </p>
+        {shareUrl ? (
+          <p className="mt-2 break-all rounded-lg bg-brand/10 px-3 py-2 font-mono text-xs text-brand">
+            {shareUrl}
+          </p>
+        ) : (
+          <button onClick={handleGetShareLink} className="btn-primary mt-3">
+            Get share link
+          </button>
+        )}
+      </div>
       <p className="text-center text-[11px] text-muted">
         Your location is shared periodically with the control room while this
         app is open, to help detect risk zones automatically.

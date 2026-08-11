@@ -4,14 +4,24 @@ import LoginForm from "./components/LoginForm.jsx";
 import DigitalIdCard from "./components/DigitalIdCard.jsx";
 import HomeScreen from "./components/HomeScreen.jsx";
 import { saveSession, getSession, clearSession } from "./api/client.js";
-
+import SharedStatus from "./components/SharedStatus.jsx";
 // "screen" tracks which view we're on. This is a simple, honest
 // approach for an app this size — a dedicated routing library
 // (like react-router) becomes worth it once you have many distinct
 // pages/URLs; for a handful of screens, plain state is clearer.
 export default function App() {
   const existingSession = getSession();
-  const [screen, setScreen] = useState(existingSession ? "home" : "login");
+
+  // Check if we're on a /shared/:token URL — this takes priority
+  // over the normal login flow, since it's meant to work for anyone,
+  // logged in or not.
+  const sharedTokenMatch = window.location.pathname.match(/^\/shared\/(.+)$/);
+  const sharedToken = sharedTokenMatch ? sharedTokenMatch[1] : null;
+
+  const [screen, setScreen] = useState(
+    sharedToken ? "shared" : existingSession ? "home" : "login"
+  );
+
   const [session, setSession] = useState(existingSession);
   const [justRegistered, setJustRegistered] = useState(null);
 
@@ -91,9 +101,12 @@ export default function App() {
             </button>
           </div>
         )}
-
-        {screen === "home" && session && (
+{screen === "home" && session && (
           <HomeScreen tourist={session.tourist} onLogout={handleLogout} />
+        )}
+
+        {screen === "shared" && sharedToken && (
+          <SharedStatus shareToken={sharedToken} />
         )}
       </div>
     </div>

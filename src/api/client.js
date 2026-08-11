@@ -65,3 +65,7 @@ export async function fetchRiskScore(touristId) {
   const res = await api.get(`/tourists/${touristId}/risk-score`);
   return res.data;
 }
+export async function getShareLink() {
+  const res = await api.post("/tourists/share-link");
+  return res.data;
+}
