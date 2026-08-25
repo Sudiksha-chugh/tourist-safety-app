@@ -1,4 +1,5 @@
 import axios from "axios";
+import { enqueueRequest } from "../utils/offlineQueue.js";
 
 export const api = axios.create({
   baseURL: "https://tourist-safety-backend-tixp.onrender.com/api",
@@ -51,14 +52,32 @@ export async function loginTourist(email, password) {
   return res.data;
 }
 
-export async function sendLocationPing(latitude, longitude) {
-  const res = await api.post("/locations/ping", { latitude, longitude });
-  return res.data;
+export async function sendLocationPing(latitude, longitude, occurredAt) {
+  try {
+    const res = await api.post("/locations/ping", { latitude, longitude, occurredAt });
+    return res.data;
+  } catch (err) {
+    // Network failure (not a server error — those should still throw
+    // normally) means we're likely offline. Queue it instead of losing it.
+    if (!err.response) {
+      enqueueRequest("ping", { latitude, longitude });
+      return { queued: true };
+    }
+    throw err;
+  }
 }
 
-export async function sendSos(latitude, longitude) {
-  const res = await api.post("/locations/sos", { latitude, longitude });
-  return res.data;
+export async function sendSos(latitude, longitude, occurredAt) {
+  try {
+    const res = await api.post("/locations/sos", { latitude, longitude, occurredAt });
+    return res.data;
+  } catch (err) {
+    if (!err.response) {
+      enqueueRequest("sos", { latitude, longitude });
+      return { queued: true };
+    }
+    throw err;
+  }
 }
 
 export async function fetchRiskScore(touristId) {
